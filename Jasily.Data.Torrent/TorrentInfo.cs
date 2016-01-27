@@ -11,11 +11,11 @@ namespace Jasily.Data.Torrent
         BencodingDictionary innerDictionary;
         readonly List<TorrentFileInfo> files = new List<TorrentFileInfo>();
 
-        private TorrentInfo()
+        protected TorrentInfo()
         {
         }
 
-        private TorrentInfo Load(Stream torrentStream)
+        protected TorrentInfo Load(Stream torrentStream)
         {
             this.innerDictionary = Bencoding.Bencoding.Parse(torrentStream);
 
@@ -37,24 +37,40 @@ namespace Jasily.Data.Torrent
             return this;
         }
 
-        public byte[] GetInfoByte() => this.innerDictionary["info"].OriginBytes();
-
         public TorrentFileInfo[] Files => this.files.ToArray();
 
         public long TotalSize => this.Files.Sum(z => z.FileSize);
 
+        public byte[] GetInfoByte() => this.innerDictionary["info"].OriginBytes();
+
+        public virtual string GetInfoHash()
+        {
+            throw new NotSupportedException();
+        }
+
         public string GetMagnetLink(string infoHash) => "magnet:?xt=urn:btih:" + infoHash;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="torrentStream"></param>
-        /// <exception cref="System.ArgumentException">此文件为非法种子</exception>
-        /// <returns></returns>
+        public virtual string GetMagnetLink()
+        {
+            throw new NotSupportedException();
+        }
+
         public static TorrentInfo From(Stream torrentStream)
         {
             var info = new TorrentInfo();
             return info.Load(torrentStream);
+        }
+
+        public static TorrentInfo TryLoad(Stream torrentStream)
+        {
+            try
+            {
+                return From(torrentStream);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }

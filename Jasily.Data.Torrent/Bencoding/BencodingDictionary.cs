@@ -9,12 +9,12 @@ namespace Jasily.Data.Torrent.Bencoding
     [DebuggerDisplay("[{Type}]")]
     public class BencodingDictionary : BencodingObject, IReadOnlyDictionary<string, BencodingObject>
     {
-        private readonly IReadOnlyDictionary<BencodingString, BencodingObject> entities;
+        private readonly List<KeyValuePair<BencodingString, BencodingObject>> entities;
         private readonly IReadOnlyDictionary<string, BencodingObject> dict;
 
-        private BencodingDictionary(IReadOnlyDictionary<BencodingString, BencodingObject> entities)
+        private BencodingDictionary(IEnumerable<KeyValuePair<BencodingString, BencodingObject>> entities)
         {
-            this.entities = entities;
+            this.entities = entities.ToList();
             this.dict = this.entities.ToDictionary(entity => entity.Key.Value, entity => entity.Value);
         }
 
@@ -33,14 +33,14 @@ namespace Jasily.Data.Torrent.Bencoding
 
         public static BencodingDictionary Build(BinaryReader reader)
         {
-            var dict = new Dictionary<BencodingString, BencodingObject>();
+            var dict = new List<KeyValuePair<BencodingString, BencodingObject>>();
 
             byte b;
             while ((b = reader.ReadByte()) != Bencoding.EndByte)
             {
                 var key = BencodingString.Build(b, reader);
                 var value = Parse(reader);
-                dict.Add(key, value);
+                dict.Add(new KeyValuePair<BencodingString, BencodingObject>(key, value));
             }
 
             return new BencodingDictionary(dict);
